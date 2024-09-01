@@ -79,6 +79,30 @@ exports.obtenerOrdenesProducidas = async (req, res) => {
     }
 };
 
+// Controlador para obtener todos los registros de la tabla OrdenVenta
+exports.obtenerTodasLasOrdenesVenta = async (req, res) => {
+    try {
+        const ventas = await OrdenVenta.findAll({
+            include: [
+                {
+                    model: OrdenProduccion,
+                    as: 'ordenProduccion'
+                }
+            ]
+        });
+
+        // Imprimir en la consola para depuración
+        console.log('Ventas obtenidas:', ventas);
+
+        res.json(ventas);
+    } catch (error) {
+        console.error('Error al obtener todas las órdenes de venta:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
+
 // Obtener una orden de producción por ID
 exports.obtenerOrdenProduccionPorId = async (req, res) => {
     const { id } = req.params;
@@ -356,19 +380,39 @@ exports.obtenerVentasPorOrden = async (req, res) => {
 };
 
 // Actualizar el estado del proceso de una orden de producción
+// Actualizar el estado del proceso de una orden de producción y ajustar stock
 exports.actualizarEstadoProcesoOrdenProduccion = async (req, res) => {
     const { id } = req.params;
-    const { estado } = req.body; // Espera un string con el estado del proceso
+    const { estado } = req.body;
 
     try {
-        const ordenProduccion = await OrdenProduccion.findByPk(id);
+        const ordenProduccion = await OrdenProduccion.findByPk(id, {
+            include: [{ model: DetalleOrdenProduccion, as: 'ordenProduccionDetalles' }]
+        });
+
         if (!ordenProduccion) {
             return res.status(404).json({ error: 'Orden de producción no encontrada' });
+        }
+
+        if (estado === 'completado' && ordenProduccion.estado !== 'completado') {
+            for (let detalle of ordenProduccion.ordenProduccionDetalles) {
+                const producto = await Producto.findByPk(detalle.id_producto);
+                if (producto) {
+                    if (producto.stock >= detalle.cantidad) {
+                        producto.stock -= detalle.cantidad;
+                        await producto.save();
+                    } else {
+                        return res.status(400).json({ error: `Stock insuficiente para el producto: ${producto.nombre}` });
+                    }
+                }
+            }
         }
 
         await ordenProduccion.update({ estado });
         res.json({ message: `Estado de la orden de producción actualizado a: ${estado}` });
     } catch (error) {
+        console.error('Error al actualizar la orden de producción:', error);
         res.status(500).json({ error: error.message });
     }
 };
+

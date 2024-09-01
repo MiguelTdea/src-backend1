@@ -90,10 +90,10 @@ exports.resetPassword = async (req, res) => {
 
 
 exports.registrarUsuario = async (req, res) => {
-    const { nombre, email, password, id_rol, activo = true } = req.body;
+    const { nombre, email, tipo_documento, numero_documento, genero, nacionalidad, telefono, direccion, password, id_rol, activo = true } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        const usuario = await Usuario.create({ nombre, email, password: hashedPassword, id_rol, activo });
+        const usuario = await Usuario.create({ nombre, email, tipo_documento, numero_documento, genero, nacionalidad, telefono, direccion, password: hashedPassword, id_rol, activo });
         res.status(201).json(usuario);
     } catch (error) {
         res.status(500).json({ error: error.message });

@@ -3,7 +3,7 @@ const { Pedido, Cliente, DetallePedido, Venta } = require('../models');
 const moment = require('moment-timezone');
 
 exports.crearPedido = async (req, res) => {
-    const { numero_pedido, id_cliente, fecha_pago, fecha_entrega, estado, pagado, detallesPedido, activo = 1 } = req.body;
+    const { numero_pedido, id_cliente, fecha_pago, fecha_entrega, estado, pagado, detallesPedido, total, activo = 1 } = req.body;
 
     try {
         const estadoInicial = pagado ? "Pendiente de Preparación" : "Esperando Pago";
@@ -19,6 +19,7 @@ exports.crearPedido = async (req, res) => {
             fecha_registro, // Utiliza la fecha actual con zona horaria de Colombia
             estado: estadoInicial, 
             pagado, 
+            total,
             activo 
         });
 

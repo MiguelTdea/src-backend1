@@ -23,6 +23,32 @@ module.exports = (sequelize) => {
       allowNull: false,
       unique: true,
     },
+    tipo_documento: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    numero_documento: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    genero: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    nacionalidad: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    telefono: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    direccion: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     password: {
       type: DataTypes.STRING,
       allowNull: false,

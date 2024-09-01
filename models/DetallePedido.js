@@ -26,6 +26,10 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    precio_unitario: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
