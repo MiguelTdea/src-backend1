@@ -22,9 +22,9 @@ exports.obtenerCompras = async (req, res) => {
 
 // Otros métodos CRUD para Compra
 exports.crearCompra = async (req, res) => {
-    const { id_proveedor, fecha_compra, fecha_registro, estado, total, activo = 1, detalleCompras } = req.body;
+    const { id_proveedor, fecha_compra, numero_recibo, fecha_registro, estado, total, activo = 1, detalleCompras } = req.body;
     try {
-        const compra = await Compra.create({ id_proveedor, fecha_compra, fecha_registro, estado, total, activo });
+        const compra = await Compra.create({ id_proveedor, fecha_compra, numero_recibo, fecha_registro, estado, total, activo });
 
         for (let detalle of detalleCompras) {
             const detalleCompra = await DetalleCompra.create({ ...detalle, id_compra: compra.id_compra });

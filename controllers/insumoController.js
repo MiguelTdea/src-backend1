@@ -12,9 +12,9 @@ exports.obtenerInsumos = async (req, res) => {
 };
 
 exports.crearInsumo = async (req, res) => {
-    const { nombre, stock_actual, id_categoria, activo = true } = req.body;
+    const { nombre, stock_actual, unidad_medida, id_categoria, activo = true } = req.body;
     try {
-        const insumo = await Insumo.create({ nombre, stock_actual, id_categoria, activo });
+        const insumo = await Insumo.create({ nombre, stock_actual, unidad_medida, id_categoria, activo });
         res.status(201).json(insumo);
     } catch (error) {
         res.status(500).json({ error: error.message });

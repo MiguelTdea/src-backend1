@@ -25,6 +25,10 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    unidad_medida: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     activo: {
       type: DataTypes.BOOLEAN,
       allowNull: false,

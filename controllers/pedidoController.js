@@ -1,11 +1,26 @@
 const { Pedido, Cliente, DetallePedido, Venta } = require('../models');
 
+const moment = require('moment-timezone');
+
 exports.crearPedido = async (req, res) => {
     const { numero_pedido, id_cliente, fecha_pago, fecha_entrega, estado, pagado, detallesPedido, activo = 1 } = req.body;
-    
+
     try {
         const estadoInicial = pagado ? "Pendiente de Preparación" : "Esperando Pago";
-        const pedido = await Pedido.create({ numero_pedido, id_cliente, fecha_pago, fecha_entrega, estado: estadoInicial, pagado, activo });
+        
+        // Establece la fecha actual en la zona horaria de Colombia
+        const fecha_registro = moment().tz('America/Bogota').toDate(); 
+
+        const pedido = await Pedido.create({ 
+            numero_pedido, 
+            id_cliente, 
+            fecha_pago, 
+            fecha_entrega, 
+            fecha_registro, // Utiliza la fecha actual con zona horaria de Colombia
+            estado: estadoInicial, 
+            pagado, 
+            activo 
+        });
 
         for (let detalle of detallesPedido) {
             await DetallePedido.create({ ...detalle, id_pedido: pedido.id_pedido });
@@ -16,6 +31,7 @@ exports.crearPedido = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
 
 exports.obtenerPedidos = async (req, res) => {
     try {

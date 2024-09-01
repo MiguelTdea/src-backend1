@@ -30,6 +30,10 @@ module.exports = (sequelize) => {
       type: DataTypes.DATE,
       allowNull: false,
     },
+    fecha_registro: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
     estado: {
       type: DataTypes.STRING,
       allowNull: false,
