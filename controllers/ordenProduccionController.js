@@ -1,8 +1,9 @@
-const { OrdenProduccion, DetalleOrdenProduccion, Producto, FichaTecnica, DetalleFichaTecnica, Insumo, OrdenVenta  } = require('../models');
+const { OrdenProduccion, DetalleOrdenProduccion, Producto, FichaTecnica, DetalleFichaTecnica, Insumo, OrdenVenta, Venta  } = require('../models');
 
 
 // Crear una nueva orden de producción
 
+// Crear una nueva orden de producción
 exports.crearOrdenProduccion = async (req, res) => {
     const { numero_orden, fecha_orden, productos, activo = true, numero_ventas } = req.body;
 
@@ -10,7 +11,7 @@ exports.crearOrdenProduccion = async (req, res) => {
         const nuevaOrden = await OrdenProduccion.create({
             numero_orden,
             fecha_orden,
-            estado: 'Listo para Entrega',
+            estado: 'pendiente de producción',
             produccion_completada: false,
             activo
         });
@@ -28,6 +29,12 @@ exports.crearOrdenProduccion = async (req, res) => {
                 id_orden: nuevaOrden.id_orden,
                 numero_venta
             });
+
+            // Actualizar el estado de la venta asociada
+            const venta = await Venta.findOne({ where: { numero_venta } });
+            if (venta) {
+                await venta.update({ estado: 'pendiente de producción' });
+            }
         }
 
         res.status(201).json(nuevaOrden);
@@ -36,6 +43,7 @@ exports.crearOrdenProduccion = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
 
 
 
@@ -231,6 +239,7 @@ exports.actualizarOrdenProduccion = async (req, res) => {
 
 
 // Producir una orden de producción
+// Producir una orden de producción
 exports.producirOrdenProduccion = async (req, res) => {
     const { id } = req.params; // ID de la orden de producción a producir
 
@@ -278,14 +287,30 @@ exports.producirOrdenProduccion = async (req, res) => {
             await producto.save();
         }
 
-        await ordenProduccion.update({ produccion_completada: true, activo: false });
+        // Actualizar el estado de la orden a "Listo para entrega" y marcar la producción como completada
+        await ordenProduccion.update({ 
+            produccion_completada: true, 
+            activo: false, 
+            estado: 'Listo para entrega' 
+        });
 
-        res.status(200).json({ message: 'Producción realizada con éxito' });
+        // Actualizar el estado de las ventas asociadas
+        const ventasAsociadas = await OrdenVenta.findAll({ where: { id_orden: id } });
+        for (let ventaAsociada of ventasAsociadas) {
+            const venta = await Venta.findOne({ where: { numero_venta: ventaAsociada.numero_venta } });
+            if (venta) {
+                await venta.update({ estado: 'Listo para entrega' });
+            }
+        }
+
+        res.status(200).json({ message: 'Producción realizada con éxito y estado actualizado a Listo para entrega' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: error.message });
     }
 };
+
+
 
 // Mover una orden de producción a la lista de órdenes ya producidas
 exports.moverOrdenProduccion = async (req, res) => {
@@ -406,6 +431,15 @@ exports.actualizarEstadoProcesoOrdenProduccion = async (req, res) => {
                     }
                 }
             }
+
+            // Actualizar el estado de las ventas asociadas a "completado"
+            const ventasAsociadas = await OrdenVenta.findAll({ where: { id_orden: id } });
+            for (let ventaAsociada of ventasAsociadas) {
+                const venta = await Venta.findOne({ where: { numero_venta: ventaAsociada.numero_venta } });
+                if (venta) {
+                    await venta.update({ estado: 'completado' });
+                }
+            }
         }
 
         await ordenProduccion.update({ estado });
@@ -415,4 +449,5 @@ exports.actualizarEstadoProcesoOrdenProduccion = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
 

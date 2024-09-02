@@ -38,19 +38,6 @@ const actualizarEstadoVenta = async (req, res) => {
             return res.status(404).json({ error: 'Venta no encontrada' });
         }
 
-        if (estado === 'completado' && venta.estado !== 'completado') {
-            for (let detalle of venta.detalles) {
-                const producto = await Producto.findByPk(detalle.id_producto);
-                if (producto) {
-                    if (producto.stock >= detalle.cantidad) {
-                        producto.stock -= detalle.cantidad;
-                        await producto.save();
-                    } else {
-                        return res.status(400).json({ error: `Stock insuficiente para el producto: ${producto.nombre}` });
-                    }
-                }
-            }
-        }
 
         venta.estado = estado;
         await venta.save();
