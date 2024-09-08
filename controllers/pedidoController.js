@@ -101,7 +101,7 @@ exports.actualizarEstadoPedido = async (req, res) => {
 
 exports.actualizarPedido = async (req, res) => {
     const { id } = req.params;
-    const { numero_pedido, id_cliente, fecha_pago, fecha_entrega, estado, pagado, detallesPedido } = req.body;
+    const { numero_pedido, id_cliente, fecha_pago, fecha_entrega, estado, pagado, total, detallesPedido } = req.body;
 
     try {
         const pedido = await Pedido.findByPk(id, {
@@ -116,7 +116,7 @@ exports.actualizarPedido = async (req, res) => {
             return res.status(400).json({ error: 'El pedido ya está completado y no se puede actualizar.' });
         }
 
-        await pedido.update({ numero_pedido, id_cliente, fecha_pago, fecha_entrega, estado, pagado });
+        await pedido.update({ numero_pedido, id_cliente, fecha_pago, fecha_entrega, estado, pagado, total });
 
         if (Array.isArray(detallesPedido)) {
             const detalleIds = detallesPedido.map(detalle => detalle.id_detalle_pedido);
