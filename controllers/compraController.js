@@ -23,16 +23,30 @@ exports.obtenerCompras = async (req, res) => {
 // Otros métodos CRUD para Compra
 exports.crearCompra = async (req, res) => {
     const { id_proveedor, fecha_compra, numero_recibo, fecha_registro, estado, total, activo = 1, detalleCompras } = req.body;
+    
     try {
         const compra = await Compra.create({ id_proveedor, fecha_compra, numero_recibo, fecha_registro, estado, total, activo });
 
         for (let detalle of detalleCompras) {
             const detalleCompra = await DetalleCompra.create({ ...detalle, id_compra: compra.id_compra });
 
-            // Actualizar el stock del insumo
+            // Obtener el insumo y verificar la unidad de medida
             const insumo = await Insumo.findByPk(detalle.id_insumo);
             if (insumo) {
-                insumo.stock_actual += detalle.cantidad;
+                let cantidadActualizada = detalle.cantidad;
+
+                // Realizar la conversión según la unidad de medida del insumo
+                if (insumo.unidad_medida === 'Mililitros') {
+                    // Convertir litros a mililitros
+                    cantidadActualizada = detalle.cantidad * 1000; // 1 litro = 1000 mililitros
+                } else if (insumo.unidad_medida === 'Gramos') {
+                    // Convertir kilogramos a gramos
+                    cantidadActualizada = detalle.cantidad * 1000; // 1 kilogramo = 1000 gramos
+                }
+                // Si la unidad es 'unidad', no se necesita conversión
+
+                // Actualizar el stock del insumo con la cantidad convertida
+                insumo.stock_actual += cantidadActualizada;
                 await insumo.save();
             } else {
                 return res.status(404).json({ error: `Insumo no encontrado: ${detalle.id_insumo}` });
@@ -44,6 +58,7 @@ exports.crearCompra = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
 
 exports.obtenerCompraPorId = async (req, res) => {
     try {

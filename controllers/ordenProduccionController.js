@@ -275,7 +275,7 @@ exports.producirOrdenProduccion = async (req, res) => {
                             insumo.stock_actual -= cantidadNecesaria;
                             await insumo.save();
                         } else {
-                            return res.status(400).json({ error: `Stock insuficiente para el insumo: ${insumo.nombre}` });
+                            return res.status(400).json({ error: `Stock insuficiente de insumos para el Producto: \n${insumo.nombre}` });
                         }
                     } else {
                         return res.status(404).json({ error: `Insumo no encontrado: ${detalleFicha.id_insumo}` });
