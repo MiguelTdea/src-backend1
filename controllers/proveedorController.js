@@ -1,10 +1,10 @@
 const { Proveedor, Compra } = require('../models');
 
 
-exports.crearProveedor = async (req, res) => {
-    const { nombre, tipo_documento, numero_documento , contacto , asesor, activo = true} = req.body;
+exports.agregarProveedor = async (req, res) => {
+    const { nombre, tipo_documento, numero_documento , contacto , asesor, estado = true} = req.body;
     try {
-        const proveedor = await Proveedor.create({ nombre, tipo_documento,numero_documento , contacto , asesor, activo});
+        const proveedor = await Proveedor.create({ nombre, tipo_documento,numero_documento , contacto , asesor, estado});
         res.status(201).json(proveedor);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -12,7 +12,7 @@ exports.crearProveedor = async (req, res) => {
 };
 
 // Otros controladores CRUD para Proveedor
-exports.obtenerProveedores = async (req, res) => {
+exports.listarProveedores = async (req, res) => {
     try {
         const proveedores = await Proveedor.findAll();
         res.json(proveedores);
@@ -33,7 +33,7 @@ exports.obtenerProveedorPorId = async (req, res) => {
     }
 };
 
-exports.actualizarProveedor = async (req, res) => {
+exports.editarProveedor = async (req, res) => {
     try {
         const proveedor = await Proveedor.update(req.body, { where: { id_proveedor: req.params.id } });
         res.json(proveedor);
@@ -65,8 +65,8 @@ exports.eliminarProveedor = async (req, res) => {
 
 exports.cambiarEstadoProveedor = async (req, res) => {
     try {
-        const { activo } = req.body;
-        const proveedor = await Proveedor.update({ activo }, { where: { id_proveedor: req.params.id } });
+        const { estado } = req.body;
+        const proveedor = await Proveedor.update({ estado }, { where: { id_proveedor: req.params.id } });
         res.json(proveedor);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -75,7 +75,7 @@ exports.cambiarEstadoProveedor = async (req, res) => {
 
 exports.obtenerProveedoresActivos = async (req, res) => {
     try {
-      const proveedores = await Proveedor.findAll({ where: { activo: true } });
+      const proveedores = await Proveedor.findAll({ where: { estado: true } });
       res.json(proveedores);
     } catch (error) {
       res.status(500).json({ error: error.message });

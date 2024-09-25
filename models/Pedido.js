@@ -5,6 +5,8 @@ module.exports = (sequelize) => {
   class Pedido extends Model {
     static associate(models) {
       Pedido.belongsTo(models.Cliente, { foreignKey: 'id_cliente', as: 'cliente' });
+       // Asociación con Estado
+       Pedido.belongsTo(models.Estado, { foreignKey: 'id_estado', as: 'estado' });
     }
   }
 
@@ -22,6 +24,10 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    id_estado: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
     fecha_pago: {
       type: DataTypes.DATE,
       allowNull: true,
@@ -32,18 +38,6 @@ module.exports = (sequelize) => {
     },
     fecha_registro: {
       type: DataTypes.DATE,
-      allowNull: false,
-    },
-    estado: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    pagado: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-    },
-    activo: {
-      type: DataTypes.BOOLEAN,
       allowNull: false,
     },
     total: {
@@ -58,7 +52,7 @@ module.exports = (sequelize) => {
       type: DataTypes.DATE,
       allowNull: false,
     },
-    anulacion: {
+    motivo_anulacion: {
       type: DataTypes.STRING,
       allowNull: true,
     },

@@ -57,7 +57,7 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
-    activo: {
+    estado: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
     },

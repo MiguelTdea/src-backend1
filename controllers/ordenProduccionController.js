@@ -1,21 +1,20 @@
-const { OrdenProduccion, DetalleOrdenProduccion, Producto, FichaTecnica, DetalleFichaTecnica, Insumo, OrdenVenta, Venta  } = require('../models');
+const { OrdenProduccion, DetalleOrdenProduccion, Producto, FichaTecnica, DetalleFichaTecnica, Insumo, OrdenVenta, Venta , Estado } = require('../models');
 
 
 // Crear una nueva orden de producción
-
-// Crear una nueva orden de producción
-exports.crearOrdenProduccion = async (req, res) => {
-    const { numero_orden, fecha_orden, productos, activo = true, numero_ventas } = req.body;
+exports.agregarOrdenProduccion = async (req, res) => {
+    const { numero_orden, fecha_orden, productos, numero_ventas } = req.body;
 
     try {
+        // Crear la nueva orden de producción con id_estado = 2 (Recientemente creada)
         const nuevaOrden = await OrdenProduccion.create({
             numero_orden,
             fecha_orden,
-            estado: 'pendiente de producción',
-            produccion_completada: false,
-            activo
+            id_estado: 2,  // Estado "Recientemente creada"
+            motivo_anulacion: null  // Inicializar el motivo de anulación como null
         });
 
+        // Crear los detalles de la orden con los productos
         for (let producto of productos) {
             await DetalleOrdenProduccion.create({
                 id_orden: nuevaOrden.id_orden,
@@ -24,19 +23,21 @@ exports.crearOrdenProduccion = async (req, res) => {
             });
         }
 
+        // Crear las órdenes de venta asociadas y actualizar el id_estado de las ventas
         for (let numero_venta of numero_ventas) {
             await OrdenVenta.create({
                 id_orden: nuevaOrden.id_orden,
                 numero_venta
             });
 
-            // Actualizar el estado de la venta asociada
+            // Actualizar el id_estado de la venta asociada a 2 (Recientemente creada)
             const venta = await Venta.findOne({ where: { numero_venta } });
             if (venta) {
-                await venta.update({ estado: 'pendiente de producción' });
+                await venta.update({ id_estado: 8 }); // Actualizar con el id_estado correspondiente
             }
         }
 
+        // Devolver la nueva orden creada
         res.status(201).json(nuevaOrden);
     } catch (error) {
         console.log('Error al crear la orden de producción:', error);
@@ -47,11 +48,14 @@ exports.crearOrdenProduccion = async (req, res) => {
 
 
 
-// Obtener todas las órdenes de producción
+
+// Obtener todas las órdenes de producción con id_estado = 2 (Recientemente creadas)
 exports.obtenerOrdenesProduccion = async (req, res) => {
     try {
         const ordenesProduccion = await OrdenProduccion.findAll({
-            where: { produccion_completada: false, activo: true },  // Solo órdenes no producidas y activas
+            where: {
+                id_estado: 2 // Solo órdenes con estado "Recientemente creadas"
+            },
             include: [{
                 model: DetalleOrdenProduccion,
                 as: 'ordenProduccionDetalles',
@@ -67,11 +71,14 @@ exports.obtenerOrdenesProduccion = async (req, res) => {
     }
 };
 
-// Obtener todas las órdenes de producción ya producidas
+
+// Obtener todas las órdenes de producción ya producidas (estado Completado o Listo para entrega)
 exports.obtenerOrdenesProducidas = async (req, res) => {
     try {
         const ordenesProducidas = await OrdenProduccion.findAll({
-            where: { produccion_completada: true, activo: false },  // Solo órdenes producidas y no activas
+            where: {
+                id_estado: [1, 3]  // Estado 1 (Completado) o Estado 3 (Listo para entrega)
+            },
             include: [{
                 model: DetalleOrdenProduccion,
                 as: 'ordenProduccionDetalles',
@@ -81,11 +88,13 @@ exports.obtenerOrdenesProducidas = async (req, res) => {
                 }]
             }]
         });
+
         res.json(ordenesProducidas);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
+
 
 // Controlador para obtener todos los registros de la tabla OrdenVenta
 exports.obtenerTodasLasOrdenesVenta = async (req, res) => {
@@ -143,7 +152,7 @@ exports.obtenerOrdenProduccionPorId = async (req, res) => {
 // Actualizar una orden de producción
 // Ejemplo: Modificación en controlador para manejar numero_venta
 // Actualizar una orden de producción
-exports.actualizarOrdenProduccion = async (req, res) => {
+exports.editarOrdenProduccion = async (req, res) => {
     const { id } = req.params;
     const { fecha_orden, productos, numero_ventas } = req.body;
 
@@ -255,6 +264,11 @@ exports.producirOrdenProduccion = async (req, res) => {
             return res.status(404).json({ error: 'Orden de producción no encontrada' });
         }
 
+        // Verificar si la orden ya ha sido producida
+        if (ordenProduccion.id_estado === 3) {
+            return res.status(400).json({ error: 'Esta orden ya está en estado "Listo para entrega".' });
+        }
+
         for (let detalle of ordenProduccion.detallesOrdenProduccion) {
             const { id_producto, cantidad } = detalle;
             const producto = await Producto.findByPk(id_producto);
@@ -287,28 +301,28 @@ exports.producirOrdenProduccion = async (req, res) => {
             await producto.save();
         }
 
-        // Actualizar el estado de la orden a "Listo para entrega" y marcar la producción como completada
+        // Actualizar el estado de la orden a "Listo para entrega" (id_estado = 3)
         await ordenProduccion.update({ 
             produccion_completada: true, 
-            activo: false, 
-            estado: 'Listo para entrega' 
+            id_estado: 1  // Cambiar a "Listo para entrega"
         });
 
-        // Actualizar el estado de las ventas asociadas
+        // Actualizar el estado de las ventas asociadas (si aplica)
         const ventasAsociadas = await OrdenVenta.findAll({ where: { id_orden: id } });
         for (let ventaAsociada of ventasAsociadas) {
             const venta = await Venta.findOne({ where: { numero_venta: ventaAsociada.numero_venta } });
             if (venta) {
-                await venta.update({ estado: 'Listo para entrega' });
+                await venta.update({ id_estado: 3 }); // Asumimos que las ventas también tienen id_estado
             }
         }
 
-        res.status(200).json({ message: 'Producción realizada con éxito y estado actualizado a Listo para entrega' });
+        res.status(200).json({ message: 'Producción realizada con éxito y estado actualizado a "Listo para entrega".' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: error.message });
     }
 };
+
 
 
 
@@ -329,10 +343,10 @@ exports.moverOrdenProduccion = async (req, res) => {
     }
 };
 
-// Activar/Inactivar una orden de producción
-exports.actualizarEstadoActivoOrdenProduccion = async (req, res) => {
+// Anular una orden de producción
+exports.anularOrdenProduccion = async (req, res) => {
     const { id } = req.params;
-    const { activo } = req.body; // Espera un valor booleano
+    const { motivo_anulacion } = req.body; // Se espera un motivo de anulación
 
     try {
         const ordenProduccion = await OrdenProduccion.findByPk(id);
@@ -340,12 +354,46 @@ exports.actualizarEstadoActivoOrdenProduccion = async (req, res) => {
             return res.status(404).json({ error: 'Orden de producción no encontrada' });
         }
 
-        await ordenProduccion.update({ activo });
-        res.json({ message: `Orden de producción ${activo ? 'activada' : 'inactivada'} correctamente.` });
+        // Verificar si la orden ya está anulada
+        if (ordenProduccion.id_estado === 5) {
+            return res.status(400).json({ error: 'La orden ya está anulada.' });
+        }
+
+        // Verificar que se proporcione un motivo de anulación
+        if (!motivo_anulacion || motivo_anulacion.trim() === '') {
+            return res.status(400).json({ error: 'Debe proporcionar un motivo de anulación.' });
+        }
+
+        // Actualizar el estado de la orden a 'Anulado' (id_estado = 5) y agregar el motivo de anulación
+        await ordenProduccion.update({
+            id_estado: 5,
+            motivo_anulacion,
+        });
+
+        // Obtener todas las ventas asociadas a esta orden
+        const ventasAsociadas = await OrdenVenta.findAll({ where: { id_orden: id } });
+
+        
+
+        // Actualizar el estado de todas las ventas asociadas a 'id_estado = 9' (Orden anulada, esperando reasignación)
+        for (let ventaAsociada of ventasAsociadas) {
+            const venta = await Venta.findOne({ where: { numero_venta: ventaAsociada.numero_venta } });
+            if (venta) {
+                await venta.update({ id_estado: 9 }); // Estado "Orden anulada, esperando reasignación"
+            }
+        }
+
+        // Eliminar las asociaciones de las ventas con la orden de producción
+        await OrdenVenta.destroy({ where: { id_orden: id } });
+
+        res.json({ message: 'Orden de producción anulada correctamente y las ventas asociadas han sido actualizadas.' });
     } catch (error) {
+        console.error('Error al anular la orden de producción:', error);
         res.status(500).json({ error: error.message });
     }
 };
+
+
 
 // obtnener ordenes activas
 exports.obtenerOrdenesActivas = async (req, res) => {
@@ -371,7 +419,7 @@ exports.obtenerOrdenesActivas = async (req, res) => {
 exports.obtenerOrdenesInactivas = async (req, res) => {
     try {
         const ordenesInactivas = await OrdenProduccion.findAll({
-            where: { activo: false },  // Solo órdenes inactivas
+            where: { id_estado: 5 },  // Solo órdenes anuladas
             include: [{
                 model: DetalleOrdenProduccion,
                 as: 'ordenProduccionDetalles',
@@ -406,7 +454,7 @@ exports.obtenerVentasPorOrden = async (req, res) => {
 
 // Actualizar el estado del proceso de una orden de producción
 // Actualizar el estado del proceso de una orden de producción y ajustar stock
-exports.actualizarEstadoProcesoOrdenProduccion = async (req, res) => {
+exports.cambiarEstadoProcesoOrdenProduccion = async (req, res) => {
     const { id } = req.params;
     const { estado } = req.body;
 

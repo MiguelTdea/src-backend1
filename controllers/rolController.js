@@ -1,9 +1,9 @@
 const { Rol, Usuario, RolPermiso, Permiso } = require('../models');
 
-exports.crearRol = async (req, res) => {
-    const { nombre,activo = 1, permisos } = req.body; // permisos es un array de IDs de permisos
+exports.agregarRol = async (req, res) => {
+    const { nombre,estado = 1, permisos } = req.body; // permisos es un array de IDs de permisos
     try {
-        const rol = await Rol.create({ nombre, activo });
+        const rol = await Rol.create({ nombre, estado });
 
         for (let id_permiso of permisos) {
             await RolPermiso.create({ id_rol: rol.id_rol, id_permiso });
@@ -15,7 +15,7 @@ exports.crearRol = async (req, res) => {
     }
 };
 
-exports.obtenerRoles = async (req, res) => {
+exports.listarRoles = async (req, res) => {
     try {
         const roles = await Rol.findAll({
             include: [
@@ -54,14 +54,14 @@ exports.obtenerRolPorId = async (req, res) => {
 
 exports.obtenerRolesActivos = async (req, res) => {
     try {
-        const roles = await Rol.findAll({ where: { activo: true } });
+        const roles = await Rol.findAll({ where: { estado: true } });
         res.json(roles);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
-exports.actualizarRol = async (req, res) => {
+exports.editarRol = async (req, res) => {
     const { id } = req.params;
     const { nombre, permisos } = req.body;
 
@@ -111,7 +111,7 @@ exports.cambiarEstadoRol = async (req, res) => {
             return res.status(404).json({ error: 'Rol no encontrado' });
         }
 
-        rol.activo = !rol.activo;
+        rol.estado = !rol.estado;
         await rol.save();
         res.json(rol);
     } catch (error) {

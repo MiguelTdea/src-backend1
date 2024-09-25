@@ -23,7 +23,7 @@ module.exports = (sequelize) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    activo:{
+    estado:{
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,

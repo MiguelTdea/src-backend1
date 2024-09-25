@@ -1,6 +1,6 @@
 const { Compra, DetalleCompra, Proveedor, Insumo } = require('../models'); // Importa los modelos necesarios
 
-exports.obtenerCompras = async (req, res) => {
+exports.listarCompras = async (req, res) => {
     try {
         const compras = await Compra.findAll({
             include: [
@@ -21,11 +21,11 @@ exports.obtenerCompras = async (req, res) => {
 };
 
 // Otros métodos CRUD para Compra
-exports.crearCompra = async (req, res) => {
-    const { id_proveedor, fecha_compra, numero_recibo, fecha_registro, estado, total, activo = 1, detalleCompras } = req.body;
+exports.registrarCompra = async (req, res) => {
+    const { id_proveedor, fecha_compra, numero_recibo, fecha_registro, id_estado = 1, total, detalleCompras } = req.body;
     
     try {
-        const compra = await Compra.create({ id_proveedor, fecha_compra, numero_recibo, fecha_registro, estado, total, activo });
+        const compra = await Compra.create({ id_proveedor, fecha_compra, numero_recibo, fecha_registro, id_estado, total, });
 
         for (let detalle of detalleCompras) {
             const detalleCompra = await DetalleCompra.create({ ...detalle, id_compra: compra.id_compra });
@@ -94,28 +94,36 @@ exports.actualizarCompra = async (req, res) => {
 
 // Otros métodos CRUD para Compra
 // Actualizar el estado de una compra (Activar/Anular)
-exports.actualizarEstadoCompra = async (req, res) => {
+exports.anularCompra = async (req, res) => {
     try {
         const { id } = req.params;
-        const { activo, anulacion } = req.body;
+        const { id_estado, motivo_anulacion } = req.body;
 
-        console.log("Datos recibidos:", { activo, anulacion });  // Log para depuración
+        console.log("Datos recibidos:", { id_estado, motivo_anulacion });  // Log para depuración
 
         const compra = await Compra.findByPk(id);
         if (!compra) {
             return res.status(404).json({ error: 'Compra no encontrada' });
         }
 
-        if (compra.anulacion && !activo) {
-            return res.status(400).json({ error: 'Una compra anulada no se puede volver a activar.' });
+        // Verificar si la compra ya está anulada
+        if (compra.id_estado === 5) {
+            return res.status(400).json({ error: 'La compra ya está anulada y no se puede volver a anular.' });
         }
 
-        if (!activo && !anulacion) {
-            return res.status(400).json({ error: 'Debe proporcionar un motivo de anulación cuando se desactiva la compra.' });
+        // Verificar si se proporciona el id_estado correcto
+        if (id_estado !== 5) {
+            return res.status(400).json({ error: 'El id_estado proporcionado no es válido para anulación.' });
         }
 
-        compra.activo = activo;
-        compra.anulacion = anulacion || compra.anulacion; // Guardar el motivo de anulación solo si se proporciona
+        // Verificar que se proporcione el motivo de anulación
+        if (!motivo_anulacion || motivo_anulacion.trim() === '') {
+            return res.status(400).json({ error: 'Debe proporcionar un motivo de anulación.' });
+        }
+
+        // Actualizar el estado y el motivo de anulación
+        compra.id_estado = id_estado;
+        compra.motivo_anulacion = motivo_anulacion;
         await compra.save();
 
         res.json(compra);
@@ -124,6 +132,7 @@ exports.actualizarEstadoCompra = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
 
 
 

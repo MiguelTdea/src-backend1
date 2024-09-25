@@ -6,8 +6,9 @@ module.exports = (sequelize) => {
     static associate(models) {
       Venta.belongsTo(models.Cliente, { foreignKey: 'id_cliente', as: 'clienteVenta' });
       Venta.hasMany(models.DetalleVenta, { foreignKey: 'id_venta', as: 'detalleVentasVenta' });
-      Venta.hasMany(models.Pago, { foreignKey: 'id_venta', as: 'pagosVenta' });
       Venta.hasMany(models.Pedido, { foreignKey: 'id_venta', as: 'pedidosVenta' });
+       // Asociación con Estado
+       Venta.belongsTo(models.Estado, { foreignKey: 'id_estado', as: 'estado' });
     }
   }
 
@@ -33,23 +34,11 @@ module.exports = (sequelize) => {
       type: DataTypes.DATE,
       allowNull: true,
     },
-    estado: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    pagado: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-    },
-    activo: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-    },
     total: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
-    anulacion: {
+    motivo_anulacion: {
       type: DataTypes.STRING,
       allowNull: true,
     },

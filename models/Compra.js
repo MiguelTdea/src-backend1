@@ -6,6 +6,8 @@ module.exports = (sequelize) => {
     static associate(models) {
       Compra.belongsTo(models.Proveedor, { foreignKey: 'id_proveedor', as: 'proveedorCompra' });
       Compra.hasMany(models.DetalleCompra, { foreignKey: 'id_compra', as: 'detalleComprasCompra' });
+       // Asociación con Estado
+       Compra.belongsTo(models.Estado, { foreignKey: 'id_estado', as: 'estado' });
     }
   }
 
@@ -16,6 +18,10 @@ module.exports = (sequelize) => {
       autoIncrement: true,
     },
     id_proveedor: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    id_estado: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
@@ -31,10 +37,7 @@ module.exports = (sequelize) => {
       type: DataTypes.DATE,
       allowNull: false,
     },
-    estado: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
+    
     total: {
       type: DataTypes.DECIMAL,
       allowNull: false,
@@ -47,11 +50,7 @@ module.exports = (sequelize) => {
       type: DataTypes.DATE,
       allowNull: false,
     },
-    activo: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-    },
-    anulacion: {
+    motivo_anulacion: {
       type: DataTypes.STRING,
       allowNull: true,
     },

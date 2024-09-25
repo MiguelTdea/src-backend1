@@ -89,11 +89,11 @@ exports.resetPassword = async (req, res) => {
 
 
 
-exports.registrarUsuario = async (req, res) => {
-    const { nombre, email, tipo_documento, numero_documento, genero, nacionalidad, telefono, direccion, password, id_rol, activo = true } = req.body;
+exports.agregarUsuario = async (req, res) => {
+    const { nombre, email, tipo_documento, numero_documento, genero, nacionalidad, telefono, direccion, password, id_rol, estado = true } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        const usuario = await Usuario.create({ nombre, email, tipo_documento, numero_documento, genero, nacionalidad, telefono, direccion, password: hashedPassword, id_rol, activo });
+        const usuario = await Usuario.create({ nombre, email, tipo_documento, numero_documento, genero, nacionalidad, telefono, direccion, password: hashedPassword, id_rol, estado });
         res.status(201).json(usuario);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -115,7 +115,7 @@ exports.loginUsuario = async (req, res) => {
 };
 
 // Otros controladores CRUD para Usuario
-exports.obtenerUsuarios = async (req, res) => {
+exports.listarUsuarios = async (req, res) => {
     try {
         const usuarios = await Usuario.findAll();
         res.json(usuarios);
@@ -138,14 +138,14 @@ exports.obtenerUsuarioPorId = async (req, res) => {
 
 exports.obtenerUsuariosActivos = async (req, res) => {
     try {
-        const usuarios = await Usuario.findAll({ where: { activo: true } });
+        const usuarios = await Usuario.findAll({ where: { estado: true } });
         res.json(usuarios);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
-exports.actualizarUsuario = async (req, res) => {
+exports.editarUsuario = async (req, res) => {
     const { password, ...otherFields } = req.body;
     try {
         if (password) {
@@ -166,7 +166,7 @@ exports.cambiarEstadoUsuario = async (req, res) => {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        usuario.activo = !usuario.activo;
+        usuario.estado = !usuario.estado;
         await usuario.save();
         res.json(usuario);
     } catch (error) {

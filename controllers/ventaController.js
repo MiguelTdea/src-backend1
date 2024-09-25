@@ -1,13 +1,13 @@
-const { Venta, DetalleVenta, Producto, Insumo, Cliente, FichaTecnica, DetalleFichaTecnica } = require('../models');
+const { Venta, DetalleVenta, Producto, Insumo, Cliente, FichaTecnica, DetalleFichaTecnica, Estado } = require('../models');
 
-const crearVenta = async (req, res) => {
-    const { numero_venta, id_cliente, fecha_venta, fecha_entrega, estado, pagado, detalleVentas, total, activo = 1 } = req.body;
+const agregarVenta = async (req, res) => {
+    const { numero_venta, id_cliente, fecha_venta, fecha_entrega, id_estado =2, detalleVentas, total } = req.body;
 
     // Generar un número de venta único si no se proporciona
     const numeroVenta = numero_venta || 'VENTA-' + Math.random().toString(36).substr(2, 9).toUpperCase();
 
     try {
-        const venta = await Venta.create({ numero_venta: numeroVenta, id_cliente, fecha_venta, fecha_entrega, estado, pagado, total, activo });
+        const venta = await Venta.create({ numero_venta: numeroVenta, id_cliente, fecha_venta, fecha_entrega, id_estado, total, });
 
         for (let detalle of detalleVentas) {
             const producto = await Producto.findByPk(detalle.id_producto);
@@ -25,7 +25,7 @@ const crearVenta = async (req, res) => {
 };
 
 
-const actualizarEstadoVenta = async (req, res) => {
+const cambiarEstadoDeProduccionVenta = async (req, res) => {
     const id_venta = req.params.id;
     const { estado } = req.body;
 
@@ -56,22 +56,48 @@ const obtenerVentasActivas = async (req, res) => {
     }
 };
 
-const cambiarEstadoActivoVenta = async (req, res) => {
+const anularVenta = async (req, res) => {
     try {
-        const venta = await Venta.findByPk(req.params.id);
+        const { id } = req.params;
+        const { id_estado, motivo_anulacion } = req.body;
+
+        console.log("Datos recibidos:", { id_estado, motivo_anulacion });  // Log para depuración
+
+        const venta = await Venta.findByPk(id);
         if (!venta) {
             return res.status(404).json({ error: 'Venta no encontrada' });
         }
 
-        venta.activo = !venta.activo;
+        // Solo permitir anular si id_estado no es 1 ni 5
+        if (venta.id_estado === 1 || venta.id_estado === 5) {
+            return res.status(400).json({ error: 'No se puede anular una venta en este estado.' });
+        }
+
+        // Verificar que se proporcione el motivo de anulación
+        if (!motivo_anulacion || motivo_anulacion.trim() === '') {
+            return res.status(400).json({ error: 'Debe proporcionar un motivo de anulación.' });
+        }
+
+        // Verificar que el id_estado proporcionado sea 5 (Anulada)
+        if (id_estado !== 5) {
+            return res.status(400).json({ error: 'El id_estado proporcionado no es válido para anulación.' });
+        }
+
+        // Actualizar el estado y el motivo de anulación
+        venta.id_estado = id_estado;
+        venta.motivo_anulacion = motivo_anulacion;
         await venta.save();
+
         res.json(venta);
     } catch (error) {
+        console.error("Error en el controlador:", error.message);
         res.status(500).json({ error: error.message });
     }
 };
 
-const obtenerVentas = async (req, res) => {
+
+
+const listarVentas = async (req, res) => {
     try {
         const ventas = await Venta.findAll({
             include: [
@@ -173,12 +199,12 @@ const eliminarVenta = async (req, res) => {
 };
 
 module.exports = {
-    crearVenta,
-    actualizarEstadoVenta,
-    obtenerVentas,
+    agregarVenta,
+    cambiarEstadoDeProduccionVenta,
+    listarVentas,
     obtenerVentaPorId,
     actualizarVenta,
     eliminarVenta,
     obtenerVentasActivas,
-    cambiarEstadoActivoVenta,
+    anularVenta,
 };

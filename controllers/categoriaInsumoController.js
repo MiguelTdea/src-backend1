@@ -1,6 +1,6 @@
 const { CategoriaInsumo, Insumo } = require('../models');
 
-exports.obtenerCategoriasInsumos = async (req, res) => {
+exports.listarCategoriasInsumos = async (req, res) => {
   try {
     const categoriasInsumos = await CategoriaInsumo.findAll({
       include: [{ model: Insumo, as: 'insumos' }]
@@ -14,7 +14,7 @@ exports.obtenerCategoriasInsumos = async (req, res) => {
 exports.obtenerCategoriasInsumosActivas = async (req, res) => {
   try {
     const categoriasInsumos = await CategoriaInsumo.findAll({
-      where: { activo: true },
+      where: { estado: true },
       include: [{ model: Insumo, as: 'insumos' }]
     });
     res.json(categoriasInsumos);
@@ -37,17 +37,17 @@ exports.obtenerCategoriaInsumoPorId = async (req, res) => {
   }
 };
 
-exports.crearCategoriaInsumo = async (req, res) => {
-  const { nombre, descripcion, activo = true } = req.body;
+exports.agregarCategoriaInsumo = async (req, res) => {
+  const { nombre, descripcion, estado = true } = req.body;
   try {
-    const categoriaInsumo = await CategoriaInsumo.create({ nombre, descripcion , activo });
+    const categoriaInsumo = await CategoriaInsumo.create({ nombre, descripcion , estado });
     res.status(201).json(categoriaInsumo);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-exports.actualizarCategoriaInsumo = async (req, res) => {
+exports.editarCategoriaInsumo = async (req, res) => {
   const { nombre, descripcion } = req.body;
   try {
     const categoriaInsumo = await CategoriaInsumo.update({ nombre, descripcion }, { where: { id_categoria: req.params.id } });
@@ -60,14 +60,14 @@ exports.actualizarCategoriaInsumo = async (req, res) => {
   }
 };
 
-exports.actualizarEstadoCategoriaInsumo = async (req, res) => {
-  const { activo } = req.body;
+exports.cambiarEstadoCategoriaInsumo = async (req, res) => {
+  const { estado } = req.body;
   try {
     const categoriaInsumo = await CategoriaInsumo.findByPk(req.params.id);
     if (!categoriaInsumo) {
       return res.status(404).json({ error: 'Categoría de Insumo no encontrada' });
     }
-    categoriaInsumo.activo = activo;
+    categoriaInsumo.estado = estado;
     await categoriaInsumo.save();
     res.json(categoriaInsumo);
   } catch (error) {

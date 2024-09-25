@@ -1,12 +1,12 @@
-const { Pedido, Cliente, DetallePedido, Venta } = require('../models');
+const { Pedido, Cliente, DetallePedido, Venta, Estado } = require('../models');
 
 const moment = require('moment-timezone');
 
-exports.crearPedido = async (req, res) => {
-    const { numero_pedido, id_cliente, fecha_pago, fecha_entrega, estado, pagado, detallesPedido, total, activo = 1 } = req.body;
+exports.agregarPedido = async (req, res) => {
+    const { numero_pedido, id_cliente, fecha_pago, fecha_entrega, id_estado=7, detallesPedido, total, } = req.body;
 
     try {
-        const estadoInicial = pagado ? "Pendiente de Preparación" : "Esperando Pago";
+        
         
         // Establece la fecha actual en la zona horaria de Colombia
         const fecha_registro = moment().tz('America/Bogota').toDate(); 
@@ -17,10 +17,9 @@ exports.crearPedido = async (req, res) => {
             fecha_pago, 
             fecha_entrega, 
             fecha_registro, // Utiliza la fecha actual con zona horaria de Colombia
-            estado: estadoInicial, 
-            pagado, 
+            id_estado,  
             total,
-            activo 
+            
         });
 
         for (let detalle of detallesPedido) {
@@ -34,7 +33,7 @@ exports.crearPedido = async (req, res) => {
 };
 
 
-exports.obtenerPedidos = async (req, res) => {
+exports.listarPedidos = async (req, res) => {
     try {
         const pedidos = await Pedido.findAll({
             attributes: { exclude: ['id_venta'] },
@@ -67,41 +66,59 @@ exports.obtenerPedidoPorId = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-exports.actualizarEstadoPedido = async (req, res) => {
-  const { numero_pedido } = req.params;
-  const { estado } = req.body;
 
-  try {
-    const pedido = await Pedido.findOne({ where: { numero_pedido }, attributes: { exclude: ['id_venta'] } });
-
-    if (!pedido) {
-      return res.status(404).json({ error: 'Pedido no encontrado' });
+exports.anularPedido = async (req, res) => {
+    const { numero_pedido: id_pedido } = req.params; // Cambia numero_pedido a id_pedido
+    const { id_estado, motivo_anulacion } = req.body;
+  
+    try {
+      // Agregar logs para verificar lo que se está recibiendo
+      console.log('ID de pedido recibido:', id_pedido);
+      console.log('Request body:', req.body);  // Verificar los datos recibidos
+  
+      // Buscar el pedido por id_pedido
+      const pedido = await Pedido.findOne({
+        attributes: { exclude: ['id_venta'] },
+        where: { id_pedido } // Cambia numero_pedido a id_pedido
+      });
+  
+      console.log('Resultado de la búsqueda del pedido:', pedido);
+  
+      if (!pedido) {
+        return res.status(404).json({ error: 'Pedido no encontrado' });
+      }
+  
+      // Solo permitir anular si id_estado no es 1 ni 5
+      if (pedido.id_estado === 1 || pedido.id_estado === 5) {
+        return res.status(400).json({ error: 'No se puede anular un pedido en este estado.' });
+      }
+  
+      // Verificar que se proporcione el motivo de anulación
+      if (!motivo_anulacion || motivo_anulacion.trim() === '') {
+        return res.status(400).json({ error: 'Debe proporcionar un motivo de anulación.' });
+      }
+  
+      // Verificar que el id_estado proporcionado sea 5 (Anulada)
+      if (id_estado !== 5) {
+        return res.status(400).json({ error: 'El id_estado proporcionado no es válido para anulación.' });
+      }
+  
+      // Actualizar el estado y el motivo de anulación
+      pedido.id_estado = id_estado;
+      pedido.motivo_anulacion = motivo_anulacion;
+      await pedido.save();
+  
+      res.json(pedido);
+    } catch (error) {
+      console.error("Error en el controlador:", error.message);
+      res.status(500).json({ error: error.message });
     }
+  };
+  
 
-    if (pedido.estado === "Completado") {
-      return res.status(400).json({ error: 'El pedido ya está completado y no se puede actualizar.' });
-    }
-
-    const estadosValidos = ["Esperando Pago", "Pendiente de Preparación", "En Preparación", "Listo Para Entrega", "Completado"];
-    const indiceEstadoActual = estadosValidos.indexOf(pedido.estado);
-    const indiceNuevoEstado = estadosValidos.indexOf(estado);
-
-    if (indiceNuevoEstado <= indiceEstadoActual) {
-      return res.status(400).json({ error: 'No se puede cambiar a un estado anterior o igual.' });
-    }
-
-    pedido.estado = estado;
-    await pedido.save();
-
-    res.status(200).json(pedido);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-exports.actualizarPedido = async (req, res) => {
+exports.editarPedido = async (req, res) => {
     const { id } = req.params;
-    const { numero_pedido, id_cliente, fecha_pago, fecha_entrega, estado, pagado, total, detallesPedido } = req.body;
+    const { numero_pedido, id_cliente, fecha_pago, fecha_entrega, id_estado, total, detallesPedido } = req.body;
 
     try {
         const pedido = await Pedido.findByPk(id, {
@@ -112,11 +129,11 @@ exports.actualizarPedido = async (req, res) => {
             return res.status(404).json({ error: 'Pedido no encontrado' });
         }
 
-        if (pedido.estado === "Completado") {
+        if (pedido.id_estado !== 7) {
             return res.status(400).json({ error: 'El pedido ya está completado y no se puede actualizar.' });
         }
 
-        await pedido.update({ numero_pedido, id_cliente, fecha_pago, fecha_entrega, estado, pagado, total });
+        await pedido.update({ numero_pedido, id_cliente, fecha_pago, fecha_entrega, id_estado, total });
 
         if (Array.isArray(detallesPedido)) {
             const detalleIds = detallesPedido.map(detalle => detalle.id_detalle_pedido);

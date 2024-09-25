@@ -9,7 +9,6 @@ const errorMiddleware = require('./middlewares/errorMiddleware');
 const usuarioRoutes = require('./routes/usuarioRoutes');
 const rolRoutes = require('./routes/rolRoutes');
 const permisoRoutes = require('./routes/permisoRoutes');
-const pagoRoutes = require('./routes/pagoRoutes');
 const proveedorRoutes = require('./routes/proveedorRoutes');
 const productoRoutes = require('./routes/productoRoutes');
 const compraRoutes = require('./routes/compraRoutes');
@@ -23,6 +22,7 @@ const rolPermisoRoutes = require('./routes/rolPermisoRoutes');
 const detallePedidoRoutes = require('./routes/detallePedidoRoutes');
 const categoriaInsumoRoutes = require('./routes/categoriaInsumoRoutes');
 const ordenProduccionRoutes = require('./routes/ordenProduccionRoutes');
+const estadoRoutes = require('./routes/estadoRoutes');
 
 // Importar y definir las asociaciones
 require('./config/associations');
@@ -35,7 +35,6 @@ app.use(cors());
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/roles', rolRoutes);
 app.use('/api/permisos', permisoRoutes);
-app.use('/api/pagos', pagoRoutes);
 app.use('/api/proveedores', proveedorRoutes);
 app.use('/api/productos', productoRoutes);
 app.use('/api/compras', compraRoutes);
@@ -49,6 +48,7 @@ app.use('/api/rol_permisos', rolPermisoRoutes);
 app.use('/api/detallepedidos', detallePedidoRoutes);
 app.use('/api/categorias_insumo', categoriaInsumoRoutes);
 app.use('/api/ordenesproduccion', ordenProduccionRoutes);
+app.use('/api/estados', estadoRoutes);
 
 
 app.use(errorMiddleware);

@@ -1,4 +1,4 @@
-const { Cliente, Insumo, Producto, Proveedor, Rol, Permiso, Usuario, Compra, DetalleCompra, FichaTecnica, DetalleFichaTecnica, Venta, DetalleVenta, Pago, Pedido, DetallePedido, RolPermiso, CategoriaInsumo, OrdenProduccion, DetalleOrdenProduccion, OrdenVenta } = require('../models');
+const { Cliente, Insumo, Producto, Proveedor, Rol, Permiso, Usuario, Compra, DetalleCompra, FichaTecnica, DetalleFichaTecnica, Venta, DetalleVenta, Estado, Pedido, DetallePedido, RolPermiso, CategoriaInsumo, OrdenProduccion, DetalleOrdenProduccion, OrdenVenta } = require('../models');
 
 // Asociaciones existentes
 
@@ -14,8 +14,6 @@ Compra.belongsTo(Proveedor, { foreignKey: 'id_proveedor', as: 'proveedor' });
 Venta.hasMany(DetalleVenta, { foreignKey: 'id_venta', as: 'detalles' });
 DetalleVenta.belongsTo(Venta, { foreignKey: 'id_venta', as: 'venta' });
 
-Venta.hasMany(Pago, { foreignKey: 'id_venta', as: 'pagos' });
-Pago.belongsTo(Venta, { foreignKey: 'id_venta', as: 'venta' });
 
 Cliente.hasMany(Pedido, { foreignKey: 'id_cliente', as: 'pedidos' });
 Pedido.belongsTo(Cliente, { foreignKey: 'id_cliente', as: 'clientesh' });
@@ -64,3 +62,20 @@ DetalleOrdenProduccion.belongsTo(Producto, { foreignKey: 'id_producto', as: 'pro
 // Asociaciones para OrdenVenta
 OrdenProduccion.hasMany(OrdenVenta, { foreignKey: 'id_orden', as: 'ventasAsociadas' });
 OrdenVenta.belongsTo(OrdenProduccion, { foreignKey: 'id_orden', as: 'ordenProduccion' });
+
+// **Nuevas asociaciones con Estado**
+// Compra
+Compra.belongsTo(Estado, { foreignKey: 'id_estado', as: 'estadouno' });
+Estado.hasMany(Compra, { foreignKey: 'id_estado', as: 'comprasuno' });
+
+// OrdenProduccion
+OrdenProduccion.belongsTo(Estado, { foreignKey: 'id_estado', as: 'estadodos' });
+Estado.hasMany(OrdenProduccion, { foreignKey: 'id_estado', as: 'ordenesProduccionuno' });
+
+// Pedido
+Pedido.belongsTo(Estado, { foreignKey: 'id_estado', as: 'estadotres' });
+Estado.hasMany(Pedido, { foreignKey: 'id_estado', as: 'pedidosuno' });
+
+// Venta
+Venta.belongsTo(Estado, { foreignKey: 'id_estado', as: 'estadocuatro' });
+Estado.hasMany(Venta, { foreignKey: 'id_estado', as: 'ventasuno' });

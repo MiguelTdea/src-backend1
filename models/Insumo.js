@@ -29,7 +29,7 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    activo: {
+    estado: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,

@@ -23,10 +23,10 @@ exports.getClienteById = async (req, res) => {
   }
 };
 
-exports.createCliente = async (req, res) => {
-  const { nombre, contacto, email , tipo_documento, numero_documento, activo = true } = req.body;
+exports.registrarCliente = async (req, res) => {
+  const { nombre, contacto, email , tipo_documento, numero_documento, estado = true } = req.body;
   try {
-    const cliente = await Cliente.create({ nombre, contacto, email, tipo_documento, numero_documento, activo });
+    const cliente = await Cliente.create({ nombre, contacto, email, tipo_documento, numero_documento, estado });
     res.status(201).json(cliente);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -35,7 +35,7 @@ exports.createCliente = async (req, res) => {
 
 exports.getClientesActivos = async (req, res) => {
   try {
-    const clientes = await Cliente.findAll({ where: { activo: true } });
+    const clientes = await Cliente.findAll({ where: { estado: true } });
     res.json(clientes);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -49,7 +49,7 @@ exports.cambiarEstadoCliente = async (req, res) => {
       return res.status(404).json({ error: 'Cliente no encontrado' });
     }
 
-    cliente.activo = !cliente.activo;
+    cliente.estado = !cliente.estado;
     await cliente.save();
     res.json(cliente);
   } catch (error) {
@@ -57,7 +57,7 @@ exports.cambiarEstadoCliente = async (req, res) => {
   }
 };
 
-exports.updateCliente = async (req, res) => {
+exports.editarCliente = async (req, res) => {
   const { nombre, contacto, email, tipo_documento, numero_documento } = req.body;
   try {
     const [updated] = await Cliente.update({ nombre, contacto, email, tipo_documento, numero_documento }, {
@@ -74,7 +74,7 @@ exports.updateCliente = async (req, res) => {
   }
 };
 
-exports.deleteCliente = async (req, res) => {
+exports.eliminarCliente = async (req, res) => {
   try {
       const cliente = await Cliente.findByPk(req.params.id);
       if (!cliente) {

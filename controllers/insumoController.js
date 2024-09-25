@@ -1,6 +1,6 @@
 const { Insumo, DetalleFichaTecnica, DetalleCompra, CategoriaInsumo } = require('../models');
 
-exports.obtenerInsumos = async (req, res) => {
+exports.listarInsumos = async (req, res) => {
     try {
         const insumos = await Insumo.findAll({
             include: { model: CategoriaInsumo, as: 'categoriaInsumo' }
@@ -11,10 +11,10 @@ exports.obtenerInsumos = async (req, res) => {
     }
 };
 
-exports.crearInsumo = async (req, res) => {
-    const { nombre, stock_actual, unidad_medida, id_categoria, activo = true } = req.body;
+exports.agregarInsumo = async (req, res) => {
+    const { nombre, stock_actual, unidad_medida, id_categoria, estado = true } = req.body;
     try {
-        const insumo = await Insumo.create({ nombre, stock_actual, unidad_medida, id_categoria, activo });
+        const insumo = await Insumo.create({ nombre, stock_actual, unidad_medida, id_categoria, estado });
         res.status(201).json(insumo);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -37,7 +37,7 @@ exports.obtenerInsumoPorId = async (req, res) => {
 
 exports.obtenerInsumosActivos = async (req, res) => {
     try {
-        const insumos = await Insumo.findAll({ where: { activo: true } });
+        const insumos = await Insumo.findAll({ where: { estado: true } });
         res.json(insumos);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -51,7 +51,7 @@ exports.cambiarEstadoInsumo = async (req, res) => {
             return res.status(404).json({ error: 'Insumo no encontrado' });
         }
 
-        insumo.activo = !insumo.activo;
+        insumo.estado = !insumo.estado;
         await insumo.save();
         res.json(insumo);
     } catch (error) {
@@ -59,7 +59,7 @@ exports.cambiarEstadoInsumo = async (req, res) => {
     }
 };
 
-exports.actualizarInsumo = async (req, res) => {
+exports.editarInsumo = async (req, res) => {
     try {
         const insumo = await Insumo.update(req.body, { where: { id_insumo: req.params.id } });
         res.json(insumo);

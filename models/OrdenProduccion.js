@@ -5,6 +5,8 @@ module.exports = (sequelize) => {
   class OrdenProduccion extends Model {
     static associate(models) {
       OrdenProduccion.hasMany(models.DetalleOrdenProduccion, { foreignKey: 'id_orden', as: 'detallesOrdenProduccion' });
+      // Asociación con Estado
+      OrdenProduccion.belongsTo(models.Estado, { foreignKey: 'id_estado', as: 'estado' });
     }
   }
 
@@ -19,21 +21,15 @@ module.exports = (sequelize) => {
       unique: true,
       allowNull: false,
     },
+    id_estado: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
     fecha_orden: {
       type: DataTypes.DATE,
       allowNull: false,
     },
-    produccion_completada: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      allowNull: false,
-    },
-    activo: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-      allowNull: false,
-    },
-    estado: {
+    motivo_anulacion: {
       type: DataTypes.STRING,
       allowNull: true,
     },

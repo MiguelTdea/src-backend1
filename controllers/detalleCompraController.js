@@ -1,6 +1,6 @@
 const { DetalleCompra } = require('../models');
 
-exports.getDetalleCompras = async (req, res) => {
+exports.listarDetalleCompras = async (req, res) => {
   try {
     const detalleCompras = await DetalleCompra.findAll();
     res.json(detalleCompras);
@@ -22,7 +22,7 @@ exports.getDetalleCompraById = async (req, res) => {
   }
 };
 
-exports.createDetalleCompra = async (req, res) => {
+exports.agregarDetalleCompra = async (req, res) => {
   const { id_compra, id_insumo, cantidad, precio_unitario } = req.body;
   try {
     const detalleCompra = await DetalleCompra.create({ id_compra, id_insumo, cantidad, precio_unitario });
@@ -49,7 +49,7 @@ exports.updateDetalleCompra = async (req, res) => {
   }
 };
 
-exports.deleteDetalleCompra = async (req, res) => {
+exports.eliminarDetalleCompra = async (req, res) => {
   try {
     const deleted = await DetalleCompra.destroy({
       where: { id_detalle_compra: req.params.id }

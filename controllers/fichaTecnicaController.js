@@ -1,10 +1,10 @@
 const { FichaTecnica, DetalleFichaTecnica, Insumo } = require('../models');
 
 
-exports.crearFichaTecnica = async (req, res) => {
-  const { id_producto, descripcion, insumos, detallesFichaTecnica, activo = true } = req.body;
+exports.agregarFichaTecnica = async (req, res) => {
+  const { id_producto, descripcion, insumos, detallesFichaTecnica, estado = true } = req.body;
   try {
-    const fichaTecnica = await FichaTecnica.create({ id_producto, descripcion, insumos, activo });
+    const fichaTecnica = await FichaTecnica.create({ id_producto, descripcion, insumos, estado });
     if (detallesFichaTecnica && detallesFichaTecnica.length > 0) {
       for (let detalle of detallesFichaTecnica) {
         await DetalleFichaTecnica.create({ ...detalle, id_ficha: fichaTecnica.id_ficha });
@@ -19,7 +19,7 @@ exports.crearFichaTecnica = async (req, res) => {
   }
 };
 
-exports.obtenerFichasTecnicas = async (req, res) => {
+exports.listarFichasTecnicas = async (req, res) => {
   try {
     const fichasTecnicas = await FichaTecnica.findAll({
       include: [{ model: DetalleFichaTecnica, as: 'detallesFichaTecnicat' }]
@@ -33,7 +33,7 @@ exports.obtenerFichasTecnicas = async (req, res) => {
 exports.obtenerFichasTecnicasActivas = async (req, res) => {
   try {
     const fichasTecnicas = await FichaTecnica.findAll({
-      where: { activo: true },
+      where: { estado: true },
       include: [{ model: DetalleFichaTecnica, as: 'detallesFichaTecnicat' }]
     });
     res.json(fichasTecnicas);
@@ -57,7 +57,7 @@ exports.obtenerFichaTecnicaPorId = async (req, res) => {
 };
 
 
-exports.actualizarFichaTecnica = async (req, res) => {
+exports.editarFichaTecnica = async (req, res) => {
   const { id } = req.params;
   const { id_producto, descripcion, insumos, detallesFichaTecnica } = req.body;
 
@@ -107,8 +107,8 @@ exports.actualizarFichaTecnica = async (req, res) => {
   }
 };
 
-exports.actualizarEstadoFichaTecnica = async (req, res) => {
-  const { activo } = req.body;
+exports.cambiarEstadoFichaTecnica = async (req, res) => {
+  const { estado } = req.body;
 
   try {
     const fichaTecnica = await FichaTecnica.findByPk(req.params.id);
@@ -117,7 +117,7 @@ exports.actualizarEstadoFichaTecnica = async (req, res) => {
       return res.status(404).json({ error: 'Ficha técnica no encontrada' });
     }
 
-    fichaTecnica.activo = activo;
+    fichaTecnica.estado = estado;
     await fichaTecnica.save();
 
     res.json(fichaTecnica);

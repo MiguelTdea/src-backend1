@@ -1,11 +1,11 @@
 const { Producto, Insumo, FichaTecnica, DetalleFichaTecnica, DetalleVenta } = require('../models');
 
-exports.crearProducto = async (req, res) => {
-    const { nombre, descripcion, precio, activo = 1 } = req.body;
+exports.agregarProducto = async (req, res) => {
+    const { nombre, descripcion, precio, estado = 1 } = req.body;
 
     try {
         // Crear el producto con stock inicial 0
-        const producto = await Producto.create({ nombre, descripcion, precio, activo, stock: 0 });
+        const producto = await Producto.create({ nombre, descripcion, precio, estado, stock: 0 });
 
         res.status(201).json(producto);
     } catch (error) {
@@ -59,7 +59,7 @@ exports.producirProducto = async (req, res) => {
 };
 
 // Otros controladores CRUD para Producto...
-exports.obtenerProductos = async (req, res) => {
+exports.listarProductos = async (req, res) => {
     try {
         const productos = await Producto.findAll();
         res.json(productos);
@@ -80,7 +80,7 @@ exports.obtenerProductoPorId = async (req, res) => {
     }
 };
 
-exports.actualizarProducto = async (req, res) => {
+exports.editarProducto = async (req, res) => {
     try {
         const producto = await Producto.update(req.body, { where: { id_producto: req.params.id } });
         res.json(producto);
@@ -91,7 +91,7 @@ exports.actualizarProducto = async (req, res) => {
 
 exports.obtenerProductosActivos = async (req, res) => {
     try {
-        const productos = await Producto.findAll({ where: { activo: true } });
+        const productos = await Producto.findAll({ where: { estado: true } });
         res.json(productos);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -128,9 +128,9 @@ exports.eliminarProducto = async (req, res) => {
     }
 };
 
-exports.actualizarEstadoProducto = async (req, res) => {
+exports.cambiarEstadoProducto = async (req, res) => {
     const { id } = req.params;
-    const { activo } = req.body;
+    const { estado } = req.body;
 
     try {
         const producto = await Producto.findByPk(id);
@@ -138,7 +138,7 @@ exports.actualizarEstadoProducto = async (req, res) => {
             return res.status(404).json({ error: 'Producto no encontrado' });
         }
 
-        producto.activo = activo;
+        producto.estado = estado;
         await producto.save();
 
         res.status(200).json(producto);

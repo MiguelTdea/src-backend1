@@ -1,6 +1,6 @@
 const { DetallePedido, Producto, Pedido } = require('../models');
 
-exports.crearDetallePedido = async (req, res) => {
+exports.agregarDetallePedido = async (req, res) => {
   const { id_pedido, id_producto, cantidad } = req.body;
   try {
     const detallePedido = await DetallePedido.create({ id_pedido, id_producto, cantidad });
@@ -10,7 +10,7 @@ exports.crearDetallePedido = async (req, res) => {
   }
 };
 
-exports.obtenerDetallesPedido = async (req, res) => {
+exports.listarDetallesPedido = async (req, res) => {
   try {
     const detallesPedido = await DetallePedido.findAll({
       include: [
@@ -53,7 +53,7 @@ exports.obtenerDetallePedidoPorId = async (req, res) => {
   }
 };
 
-exports.actualizarDetallePedido = async (req, res) => {
+exports.editarDetallePedido = async (req, res) => {
   try {
     const detallePedido = await DetallePedido.update(req.body, { where: { id_detalle_pedido: req.params.id } });
     res.json(detallePedido);
