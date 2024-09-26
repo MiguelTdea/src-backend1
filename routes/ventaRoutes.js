@@ -11,5 +11,7 @@ router.put('/:id', authMiddleware.verifyToken, ventaController.actualizarVenta);
 router.put('/:id/estado', authMiddleware.verifyToken, ventaController.cambiarEstadoDeProduccionVenta);
 router.delete('/:id', authMiddleware.verifyToken, ventaController.eliminarVenta);
 router.patch('/:id/estado', authMiddleware.verifyToken, ventaController.anularVenta);
+router.patch('/:id/entregar', authMiddleware.verifyToken, ventaController.entregarVenta);
+
 
 module.exports = router;

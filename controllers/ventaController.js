@@ -198,6 +198,57 @@ const eliminarVenta = async (req, res) => {
     }
 };
 
+const entregarVenta = async (req, res) => {
+    const { id } = req.params; // Cambia esto para que `id` contenga el numero_venta
+    console.log("Número de venta recibido:", id);
+
+    try {
+        // Buscar la venta por numero_venta, incluyendo los detalles
+        const venta = await Venta.findOne({
+            where: { numero_venta: id }, // Asegúrate de que esto sea el campo correcto
+            include: [{ model: DetalleVenta, as: 'detalles' }]
+        });
+
+        if (!venta) {
+            console.log("Venta no encontrada para el número:", id); // Log adicional para depuración
+            return res.status(404).json({ error: 'Venta no encontrada' });
+        }
+
+        // Verificar si el estado de la venta es "Listo Para Entrega" (id_estado = 3)
+        if (venta.id_estado !== 3) {
+            return res.status(400).json({ error: 'La venta no está en estado "Listo Para Entrega".' });
+        }
+
+        // Descontar productos del stock
+        for (let detalle of venta.detalles) {
+            const producto = await Producto.findByPk(detalle.id_producto);
+            if (producto) {
+                // Verificar si hay suficiente stock
+                if (producto.stock < detalle.cantidad) {
+                    return res.status(400).json({ error: `No hay suficiente stock para el producto: ${producto.nombre}` });
+                }
+                // Descontar del stock
+                producto.stock -= detalle.cantidad;
+                await producto.save();
+            } else {
+                return res.status(404).json({ error: `Producto no encontrado: ${detalle.id_producto}` });
+            }
+        }
+
+        // Actualizar el estado de la venta a Completado (id_estado = 1)
+        venta.id_estado = 1;
+        await venta.save();
+
+        res.status(200).json({ message: 'Venta completada y stock actualizado.', venta });
+    } catch (error) {
+        console.error("Error en el controlador de entrega:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
+
+
 module.exports = {
     agregarVenta,
     cambiarEstadoDeProduccionVenta,
@@ -207,4 +258,5 @@ module.exports = {
     eliminarVenta,
     obtenerVentasActivas,
     anularVenta,
+    entregarVenta,
 };
