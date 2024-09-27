@@ -36,10 +36,6 @@ module.exports = (sequelize) => {
       type: DataTypes.DATE,
       allowNull: false,
     },
-    fecha_registro: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
     total: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,

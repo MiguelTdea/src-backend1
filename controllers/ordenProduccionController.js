@@ -1,5 +1,6 @@
-const { OrdenProduccion, DetalleOrdenProduccion, Producto, FichaTecnica, DetalleFichaTecnica, Insumo, OrdenVenta, Venta , Estado } = require('../models');
-
+const { OrdenProduccion, DetalleOrdenProduccion, Producto, FichaTecnica, DetalleFichaTecnica, Insumo, OrdenVenta, Venta , Estado, Cliente } = require('../models');
+const nodemailer = require('nodemailer');
+const transporter = require('../config/nodemailer');
 
 // Crear una nueva orden de producción
 exports.agregarOrdenProduccion = async (req, res) => {
@@ -249,6 +250,7 @@ exports.editarOrdenProduccion = async (req, res) => {
 
 // Producir una orden de producción
 // Producir una orden de producción
+// Producir una orden de producción
 exports.producirOrdenProduccion = async (req, res) => {
     const { id } = req.params; // ID de la orden de producción a producir
 
@@ -301,7 +303,7 @@ exports.producirOrdenProduccion = async (req, res) => {
             await producto.save();
         }
 
-        // Actualizar el estado de la orden a "Listo para entrega" (id_estado = 3)
+        // Actualizar el estado de la orden a "Completado" (id_estado = 1)
         await ordenProduccion.update({ 
             produccion_completada: true, 
             id_estado: 1  // Cambiar a "Listo para entrega"
@@ -310,13 +312,38 @@ exports.producirOrdenProduccion = async (req, res) => {
         // Actualizar el estado de las ventas asociadas (si aplica)
         const ventasAsociadas = await OrdenVenta.findAll({ where: { id_orden: id } });
         for (let ventaAsociada of ventasAsociadas) {
-            const venta = await Venta.findOne({ where: { numero_venta: ventaAsociada.numero_venta } });
+            const venta = await Venta.findOne({ 
+                where: { numero_venta: ventaAsociada.numero_venta },
+                include: {
+                    model: Cliente, // Incluimos al cliente para acceder a su email
+                    as: 'cliente'
+                }
+            });
             if (venta) {
-                await venta.update({ id_estado: 3 }); // Asumimos que las ventas también tienen id_estado
+                await venta.update({ id_estado: 3 }); // Cambiar estado de la venta
+
+                // Enviar correo si el estado de la venta es 3
+                if (venta.id_estado === 3) {
+                    const mailOptions = {
+                        from: 'caldas.delicremsupp0rt@yahoo.com', // Tu correo de Brevo
+                        to: venta.cliente.email, // Correo del cliente
+                        subject: 'Pedido listo para recoger',
+                        text: `Hola ${venta.cliente.nombre},\n\nTu pedido con número ${venta.numero_venta} está listo para ser recogido. Puedes pasar a recogerlo en la fecha acordada.\n\nGracias por tu preferencia.\n\nSaludos,\nTu Empresa Delicrem+.`
+                    };
+
+                    // Enviar el correo
+                    transporter.sendMail(mailOptions, (error, info) => {
+                        if (error) {
+                            console.error(`Error al enviar el correo: ${error}`);
+                        } else {
+                            console.log(`Correo enviado: ${info.response}`);
+                        }
+                    });
+                }
             }
         }
 
-        res.status(200).json({ message: 'Producción realizada con éxito y estado actualizado a "Listo para entrega".' });
+        res.status(200).json({ message: 'Producción realizada con éxito, estado actualizado a "Listo para entrega", y correo enviado al cliente.' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: error.message });

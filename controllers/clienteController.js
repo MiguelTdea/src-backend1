@@ -1,4 +1,6 @@
 const { Cliente, Venta } = require('../models');
+const nodemailer = require('nodemailer');
+const transporter = require('../config/nodemailer');
 
 
 exports.getClientes = async (req, res) => {
@@ -23,10 +25,31 @@ exports.getClienteById = async (req, res) => {
   }
 };
 
+// Registrar un nuevo cliente
 exports.registrarCliente = async (req, res) => {
-  const { nombre, contacto, email , tipo_documento, numero_documento, estado = true } = req.body;
+  const { nombre, contacto, email, tipo_documento, numero_documento, estado = true } = req.body;
   try {
+    // Crear el cliente en la base de datos
     const cliente = await Cliente.create({ nombre, contacto, email, tipo_documento, numero_documento, estado });
+
+    // Configurar el correo de bienvenida
+    const mailOptions = {
+      from: 'caldas.delicremsupp0rt@yahoo.com', // Tu correo de Brevo
+      to: email, // Correo del cliente
+      subject: 'Bienvenido/a ¡Ya eres parte de Nosotros!',
+      text: `Hola ${nombre},\n\nGracias por Preferir nuestros Productos. Estamos encantados de tenerte como cliente.\nSi tienes alguna duda o consulta, no dudes en contactarnos.\n\nSaludos cordiales,\nTu Empresa Delicrem+`
+    };
+
+    // Enviar el correo
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error(`Error al enviar el correo: ${error}`);
+      } else {
+        console.log(`Correo de bienvenida enviado: ${info.response}`);
+      }
+    });
+
+    // Enviar la respuesta HTTP
     res.status(201).json(cliente);
   } catch (error) {
     res.status(500).json({ error: error.message });
